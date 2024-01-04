@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="SshConfigs">
+    <configs>
+      <sshConfig authType="PASSWORD" host="192.168.1.155" id="23c5b3d4-a091-496e-acd6-800bfdf8c1fd" port="22" customName="k8s-master01" nameFormat="CUSTOM" username="root" useOpenSSHConfig="true">
+        <option name="customName" value="k8s-master01" />
+      </sshConfig>
+    </configs>
+  </component>
+</project>
