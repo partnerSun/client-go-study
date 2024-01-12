@@ -1,8 +1,7 @@
 package main
 
 import (
-	"goStudy/config"
-	"goStudy/pod"
+	_ "goStudy/controllers/initcontroller"
 )
 
 func main() {
@@ -15,5 +14,5 @@ func main() {
 	//cluster.ClusterInfoCheck(config.ClientSet)
 	//pod.CreatePod(config.Namesapce, "nginx-example-pod", config.ClientSet)
 	//pod.DelPod(config.Namesapce, "nginx-example-pod", config.ClientSet)
-	pod.GetPod(config.Namesapce, "nginx-example-pod", config.ClientSet)
+	//pod.GetPod(config.Namesapce, "nginx-example-pod", config.ClientSet)
 }
