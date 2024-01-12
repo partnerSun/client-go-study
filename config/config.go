@@ -33,6 +33,6 @@ func init() {
 	viper.SetDefault("image_nameV", "nginx")
 	Image = viper.GetString("image_nameV")
 	//定义元数据命名空间
-	viper.SetDefault("metans", "metaNamespace")
+	viper.SetDefault("metans", "meta-namespace")
 	MetaNamespace = viper.GetString("metans")
 }
