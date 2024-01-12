@@ -33,4 +33,5 @@ func metaDataInit2() {
 		fmt.Printf("集群版本是%s\n", inClusterVersion)
 		fmt.Printf("%s 命名空间创建成功\n", cf.MetaNamespace)
 	}
+	fmt.Printf("%s 命名空间已存在\n", cf.MetaNamespace)
 }
