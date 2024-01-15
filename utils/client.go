@@ -12,9 +12,9 @@ func ClientSetinit(kconfig *string) *kubernetes.Clientset {
 	// 使用 clientcmd 加载 kubeconfig 文件
 	config, err := clientcmd.BuildConfigFromFlags("", *kconfig)
 	// 通过 InClusterConfig 方法获取集群内 kubeconfig 配置
-	//config, err := rest.InClusterConfig()
+	//kubeconfig, err := rest.InClusterConfig()
 	if err != nil {
-		fmt.Printf("Error building config: %v\n", err)
+		fmt.Printf("Error building kubeconfig: %v\n", err)
 		os.Exit(1)
 	}
 
@@ -33,9 +33,9 @@ func DynamicClientInit(kconfig *string) *dynamic.DynamicClient {
 	// 使用 clientcmd 加载 kubeconfig 文件
 	config, err := clientcmd.BuildConfigFromFlags("", *kconfig)
 	// 通过 InClusterConfig 方法获取集群内 kubeconfig 配置
-	//config, err := rest.InClusterConfig()
+	//kubeconfig, err := rest.InClusterConfig()
 	if err != nil {
-		fmt.Printf("Error building config: %v\n", err)
+		fmt.Printf("Error building kubeconfig: %v\n", err)
 		os.Exit(1)
 	}
 

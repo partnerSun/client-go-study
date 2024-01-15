@@ -13,7 +13,7 @@ import (
 
 func metaDatainit() {
 	if home := homedir.HomeDir(); home != "" {
-		cf.InClusterKubeconfig = flag.String("kubeconfig", home+"/.kube/config", "(optional) absolute path to the kubeconfig file")
+		cf.InClusterKubeconfig = flag.String("kubeconfig", home+"/.kube/kubeconfig", "(optional) absolute path to the kubeconfig file")
 	} else {
 		cf.InClusterKubeconfig = flag.String("kubeconfig", "", "absolute path to the kubeconfig file")
 	}
