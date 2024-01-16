@@ -28,6 +28,13 @@ var (
 	Password             string
 )
 
+type PodSruct struct {
+	Podname   string `json:"podname"`
+	Namespace string `json:"namespace"`
+	CImage    string `json:"cimage"`
+	CName     string `json:"cname"`
+}
+
 // 统一日志配置管理
 func LogConfig(l string) {
 	if l == "debug" {

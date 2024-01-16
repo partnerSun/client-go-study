@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	_ "goStudy/config"
-	_ "goStudy/controllers/initcontroller"
 	"goStudy/middlewares"
 	"goStudy/routers"
 	"goStudy/utils/jwtutils"

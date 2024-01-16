@@ -3,26 +3,32 @@ package pod
 import (
 	"context"
 	"fmt"
+	cf "goStudy/config"
+	_ "goStudy/controllers/initcontroller"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes"
 	"os"
 )
 
-func GetPod(ns string, podName string, clientset *kubernetes.Clientset) (*corev1.Pod, error) {
+func GetPod(ns string, podName string) (*corev1.Pod, error) {
 	// 使用 Pod 名称和命名空间查询指定 Pod 的详细信息
-	pod, err := clientset.CoreV1().Pods(ns).Get(context.TODO(), podName, metav1.GetOptions{})
+	pod, err := cf.ClientSet.CoreV1().Pods(ns).Get(context.TODO(), podName, metav1.GetOptions{})
 	//podStatus := pod.Status.ContainerStatuses[0].State.Waiting.Reason
 	if err != nil {
 		//fmt.Printf("Error! failed getting Pod %s in namespace %s: %s\n", podName, ns, err.Error())
 		return nil, err
 		//os.Exit(1)
 	}
-	fmt.Printf("Getting Pod  %s in namespace %s", podName, ns)
+	fmt.Printf("Getting Pod  %s in namespace %s\n", podName, ns)
 	return pod, nil
 }
 
-func CreatePod(ns string, podName string, clientset *kubernetes.Clientset) {
+func CreatePod(cpinfo cf.PodSruct) (*corev1.Pod, error) {
+	podName := cpinfo.Podname
+	ns := cpinfo.Namespace
+	//cName := cpinfo["cname"]
+	cImage := cpinfo.CImage
+	cName := cpinfo.CName
 	pod := &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      podName,
@@ -31,23 +37,26 @@ func CreatePod(ns string, podName string, clientset *kubernetes.Clientset) {
 		Spec: corev1.PodSpec{
 			Containers: []corev1.Container{
 				{
-					Name:  "nginx",
-					Image: "nginx:1.24.0",
+					Name:  cName,
+					Image: cImage,
 				},
 			},
 		},
 	}
-	_, err := clientset.CoreV1().Pods(ns).Create(context.TODO(), pod, metav1.CreateOptions{})
+	_, err := cf.ClientSet.CoreV1().Pods(ns).Create(context.TODO(), pod, metav1.CreateOptions{})
 	if err != nil {
 		fmt.Printf("Error! failed to Create Pod %s in namespace %s: %s", podName, ns, err.Error())
-		os.Exit(1)
+		//os.Exit(1)
+		return nil, err
 	}
 	fmt.Printf("Create Pod  %s in namespace %s success!", podName, ns)
+	return nil, nil
 }
-func PodInfoCheck(ns string, podName string, clientset *kubernetes.Clientset) {
+
+func PodInfoCheck(ns string, podName string) {
 
 	// 使用 Pod 名称和命名空间查询指定 Pod 的详细信息
-	pod, _ := GetPod(ns, podName, clientset)
+	pod, _ := GetPod(ns, podName)
 	// 打印获取到的 Pod 详细信息
 	fmt.Printf("Pod Details:\n")
 	fmt.Printf("Name: %s\n", pod.Name)
@@ -78,8 +87,8 @@ func PodInfoCheck(ns string, podName string, clientset *kubernetes.Clientset) {
 	// 你可以根据实际需求，进一步处理获取到的 Pod 详细信息
 
 }
-func DelPod(ns string, podName string, clientset *kubernetes.Clientset) {
-	_, err := GetPod(ns, podName, clientset)
+func DelPod(ns string, podName string) {
+	_, err := GetPod(ns, podName)
 	if err != nil {
 		fmt.Printf("Error! failed getting Pod %s in namespace %s: %s\n", podName, ns, err.Error())
 		os.Exit(1)
@@ -87,17 +96,17 @@ func DelPod(ns string, podName string, clientset *kubernetes.Clientset) {
 	}
 	fmt.Printf("Getting Pod  %s in namespace %s", podName, ns)
 
-	err = clientset.CoreV1().Pods(ns).Delete(context.TODO(), podName, metav1.DeleteOptions{})
+	err = cf.ClientSet.CoreV1().Pods(ns).Delete(context.TODO(), podName, metav1.DeleteOptions{})
 	if err != nil {
 		fmt.Printf("Error! failed to Delele pod %s:%s", podName, err.Error())
 		os.Exit(1)
 	}
 	fmt.Printf("Delele pod %s success", podName)
 }
-func AllPodStatusList(ns string, clientset *kubernetes.Clientset) {
+func AllPodStatusList(ns string) {
 
 	// 查询 Pod 列表
-	pods, err := clientset.CoreV1().Pods(ns).List(context.TODO(), metav1.ListOptions{})
+	pods, err := cf.ClientSet.CoreV1().Pods(ns).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		fmt.Printf("Error getting Pod list: %v\n", err)
 		os.Exit(1)
