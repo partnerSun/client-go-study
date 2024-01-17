@@ -2,15 +2,15 @@ package initcontroller
 
 import (
 	cf "goStudy/config"
-	"goStudy/utils"
+	"goStudy/utils/client"
 )
 
 func metaDataInit2(MetaNamespace string) {
 	tmpstr := "config/kubeconfig"
 	cf.OutClusterKubeconfig = &tmpstr
 	//生成 Kubernetes 客户端配置，KubeconfigOutCluster或KubeconfigInCluster
-	cf.ClientSet = utils.ClientSetinit(cf.OutClusterKubeconfig)
-	cf.DynamicClient = utils.DynamicClientInit(cf.OutClusterKubeconfig)
+	cf.ClientSet = client.ClientSetinit(cf.OutClusterKubeconfig)
+	cf.DynamicClient = client.DynamicClientInit(cf.OutClusterKubeconfig)
 	//判断命名空间是否存在
 	//_, err := cf.ClientSet.CoreV1().Namespaces().Get(context.TODO(), MetaNamespace, metav1.GetOptions{})
 	//inClusterVersion, err := cf.ClientSet.Discovery().ServerVersion()

@@ -8,10 +8,25 @@ import (
 // 子路由
 func RegisterSubRouters(sgroup *gin.RouterGroup) {
 	clusterGroup := sgroup.Group("/cluster")
-	AddCluster(clusterGroup)
+	AddC(clusterGroup)
+	DelC(clusterGroup)
+	UpdateC(clusterGroup)
+	GetC(clusterGroup)
 
 }
 
-func AddCluster(clusterGroup *gin.RouterGroup) {
-	clusterGroup.GET("/addcluster", cluster.Add)
+func AddC(clusterGroup *gin.RouterGroup) {
+	clusterGroup.POST("/add", cluster.Add)
+}
+
+func DelC(clusterGroup *gin.RouterGroup) {
+	clusterGroup.POST("/del", cluster.Delete)
+}
+
+func UpdateC(clusterGroup *gin.RouterGroup) {
+	clusterGroup.POST("/update", cluster.Update)
+}
+
+func GetC(clusterGroup *gin.RouterGroup) {
+	clusterGroup.GET("/get", cluster.Get)
 }

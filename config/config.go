@@ -35,6 +35,11 @@ type PodSruct struct {
 	CName     string `json:"cname"`
 }
 
+type NewReturnData struct {
+	Status  int
+	Message string
+}
+
 // 统一日志配置管理
 func LogConfig(l string) {
 	if l == "debug" {

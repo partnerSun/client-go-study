@@ -5,7 +5,7 @@ import (
 	"flag"
 	"fmt"
 	cf "goStudy/config"
-	"goStudy/utils"
+	"goStudy/utils/client"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/util/homedir"
@@ -19,8 +19,8 @@ func metaDatainit() {
 	}
 	flag.Parse()
 	//集群外可使用离线的config文件
-	cf.ClientSet = utils.ClientSetinit(cf.InClusterKubeconfig)
-	cf.DynamicClient = utils.DynamicClientInit(cf.InClusterKubeconfig)
+	cf.ClientSet = client.ClientSetinit(cf.InClusterKubeconfig)
+	cf.DynamicClient = client.DynamicClientInit(cf.InClusterKubeconfig)
 	//判断命名空间是否存在
 	_, err := cf.ClientSet.CoreV1().Namespaces().Get(context.Background(), cf.MetaNamespace, metav1.GetOptions{})
 	if err != nil {

@@ -5,6 +5,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"goStudy/config"
 	"goStudy/routers/auth"
+	"goStudy/routers/cluster"
 	"goStudy/routers/pod"
 )
 
@@ -14,5 +15,6 @@ func RegisterRouters(r *gin.Engine) {
 	auth.RegisterSubRouters(apiGroup)
 	//cluster.RegisterSubRouters(apiGroup)
 	pod.RegisterSubRouters(apiGroup)
+	cluster.RegisterSubRouters(apiGroup)
 	r.Run(config.Port)
 }
