@@ -151,6 +151,7 @@ func Delete(c *gin.Context) {
 	c.JSON(http.StatusOK, returnData)
 }
 
+// 查询集群信息
 func Get(c *gin.Context) {
 	var returnData cf.NewReturnData
 	logs.Info(nil, "获取某个集群信息")
@@ -162,12 +163,15 @@ func Get(c *gin.Context) {
 		returnData.Message = msg
 		returnData.Status = 400
 	} else {
-		sAnnotation := sinfo.Annotations
+		var clusterinfo map[string]string                            //定义一个字典保存集群信息
+		clusterinfo = sinfo.Annotations                              //先保存Annotations
+		clusterinfo["kubeconfig"] = string(sinfo.Data["kubeconfig"]) //再把kubeconfig添加到clusterinfo中
+
 		msg := "获取集群信息成功"
 		returnData.Message = msg
 		returnData.Status = 200
-		returnData.Data = map[string]interface{}{"info": sAnnotation}
-		logs.Info(map[string]interface{}{"集群信息": sAnnotation}, "")
+		returnData.Data = map[string]interface{}{"iterm": clusterinfo}
+		logs.Info(map[string]interface{}{"集群信息": clusterinfo}, "")
 	}
 	c.JSON(http.StatusOK, returnData)
 }
