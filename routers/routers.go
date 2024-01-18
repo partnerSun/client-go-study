@@ -6,6 +6,7 @@ import (
 	"goStudy/config"
 	"goStudy/routers/auth"
 	"goStudy/routers/cluster"
+	"goStudy/routers/namespace"
 	"goStudy/routers/pod"
 )
 
@@ -16,5 +17,6 @@ func RegisterRouters(r *gin.Engine) {
 	//cluster.RegisterSubRouters(apiGroup)
 	pod.RegisterSubRouters(apiGroup)
 	cluster.RegisterSubRouters(apiGroup)
+	namespace.RegisterSubRouters(apiGroup)
 	r.Run(config.Port)
 }

@@ -13,7 +13,7 @@ import (
 	"net/http"
 )
 
-type ClusterInfo struct {
+type NameSpaceInfo struct {
 	Id          string `json:"id"`
 	DisplayName string `json:"displayname"`
 	City        string `json:"city"`
@@ -21,14 +21,14 @@ type ClusterInfo struct {
 }
 
 // 描述Namespace所用的配置信息
-type ClusterConfig struct {
-	ClusterInfo
+type NameSpaceConfig struct {
+	NameSpaceInfo
 	KubeConfig string `json:"kubeconfig"`
 }
 
 // 描述Namespace状态
-type ClusterStatus struct {
-	ClusterInfo
+type NameSpaceStatus struct {
+	NameSpaceInfo
 	Version string
 	Status  string
 }
@@ -36,9 +36,9 @@ type ClusterStatus struct {
 var err error
 
 // 结构体方法，判断Namespace状态
-func (c *ClusterConfig) getClusterStatus() (ClusterStatus, error) {
-	clusterStatus := ClusterStatus{}
-	clusterStatus.ClusterInfo = c.ClusterInfo
+func (c *NameSpaceConfig) getClusterStatus() (NameSpaceStatus, error) {
+	clusterStatus := NameSpaceStatus{}
+	clusterStatus.NameSpaceInfo = c.NameSpaceInfo
 
 	cf.ClientSet, err = client.ClientSetinitByString(c.KubeConfig)
 
@@ -67,7 +67,7 @@ func addOrUpdate(c *gin.Context, op string) {
 		arg = "更新"
 	}
 	//绑定post参数
-	clusterconfig := ClusterConfig{}
+	clusterconfig := NameSpaceConfig{}
 	if err := c.ShouldBindJSON(&clusterconfig); err != nil { //如果 JSON 数据无法绑定到结构体，它不会返回错误，而是返回一个布尔值（bool）
 		msg := arg + "Namespace的配置信息不完整: " + err.Error()
 		returnData.Status = 400
@@ -88,22 +88,25 @@ func addOrUpdate(c *gin.Context, op string) {
 	logs.Info(map[string]interface{}{"Namespace名称": clusterconfig.DisplayName, "NamespaceID": clusterconfig.Id}, "开始"+arg+"Namespace")
 
 	//配置scret
-	var clusterSecretConfig corev1.Secret
-	clusterSecretConfig.Name = clusterconfig.Id
-	clusterSecretConfig.Labels = map[string]string{"metadata": "true"}
+	var clusterNamespace corev1.Namespace
+
+	clusterNamespace.Name = clusterconfig.Id
+	clusterNamespace.Labels = map[string]string{"metadata": "true"}
 
 	//添加Annotations
-	clusterSecretConfig.Annotations = make(map[string]string)
+	clusterNamespace.Annotations = make(map[string]string)
 	m := utils.Struct2map(clusterStatus) //结构体转map
-	clusterSecretConfig.Annotations = m
+	clusterNamespace.Annotations = m
 
 	//secret的data字段，需要加密，stringdata自带加密，所以此处直接使用stringdata
-	clusterSecretConfig.StringData = map[string]string{"kubeconfig": clusterconfig.KubeConfig}
+	//clusterNamespace.StringData = map[string]string{"kubeconfig": clusterconfig.KubeConfig}
 
 	if op == "Create" || op == "create" {
-		_, err = cf.ClientSet.CoreV1().Secrets(cf.MetaNamespace).Create(context.TODO(), &clusterSecretConfig, metav1.CreateOptions{})
+		//_, err = cf.ClientSet.CoreV1().Secrets(cf.MetaNamespace).Create(context.TODO(), &clusterSecretConfig, metav1.CreateOptions{})
+		_, err = cf.ClientSet.CoreV1().Namespaces().Create(context.TODO(), &clusterNamespace, metav1.CreateOptions{})
+
 	} else {
-		_, err = cf.ClientSet.CoreV1().Secrets(cf.MetaNamespace).Update(context.TODO(), &clusterSecretConfig, metav1.UpdateOptions{})
+		_, err = cf.ClientSet.CoreV1().Namespaces().Update(context.TODO(), &clusterNamespace, metav1.UpdateOptions{})
 	}
 
 	if err != nil {
@@ -122,7 +125,7 @@ func addOrUpdate(c *gin.Context, op string) {
 }
 
 // 创建Namespace
-func Add(c *gin.Context) {
+func Create(c *gin.Context) {
 	logs.Info(nil, "添加Namespace")
 	addOrUpdate(c, "create")
 }

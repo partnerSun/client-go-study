@@ -2,36 +2,36 @@ package namespace
 
 import (
 	"github.com/gin-gonic/gin"
-	namespace "goStudy/controllers/cluster"
+	"goStudy/controllers/namespace"
 )
 
 // 子路由
 func RegisterSubRouters(sgroup *gin.RouterGroup) {
-	clusterGroup := sgroup.Group("/namespace")
-	AddC(clusterGroup)
-	DelC(clusterGroup)
-	UpdateC(clusterGroup)
-	GetC(clusterGroup)
-	ListC(clusterGroup)
+	nsGroup := sgroup.Group("/namespace")
+	AddC(nsGroup)
+	DelC(nsGroup)
+	UpdateC(nsGroup)
+	GetC(nsGroup)
+	ListC(nsGroup)
 
 }
 
-func AddC(clusterGroup *gin.RouterGroup) {
-	clusterGroup.POST("/add", namespace.Add)
+func AddC(nsGroup *gin.RouterGroup) {
+	nsGroup.POST("/create", namespace.Create)
 }
 
-func DelC(clusterGroup *gin.RouterGroup) {
-	clusterGroup.GET("/delete", namespace.Delete)
+func DelC(nsGroup *gin.RouterGroup) {
+	nsGroup.GET("/delete", namespace.Delete)
 }
 
-func UpdateC(clusterGroup *gin.RouterGroup) {
-	clusterGroup.POST("/update", namespace.Update)
+func UpdateC(nsGroup *gin.RouterGroup) {
+	nsGroup.POST("/update", namespace.Update)
 }
 
-func GetC(clusterGroup *gin.RouterGroup) {
-	clusterGroup.GET("/get", namespace.Get)
+func GetC(nsGroup *gin.RouterGroup) {
+	nsGroup.GET("/get", namespace.Get)
 }
 
-func ListC(clusterGroup *gin.RouterGroup) {
-	clusterGroup.GET("/list", namespace.List)
+func ListC(nsGroup *gin.RouterGroup) {
+	nsGroup.GET("/list", namespace.List)
 }
