@@ -56,18 +56,26 @@ func (c *ClusterConfig) getClusterStatus() (ClusterStatus, error) {
 	return clusterStatus, nil
 }
 
-// 通过secret创建集群，secret中保存集群信息和kubeconfig
-func Add(c *gin.Context) {
-	logs.Info(nil, "添加	集群")
+// 提取相同逻辑，添加和更新
+func addOrUpdate(c *gin.Context, op string) {
 	var returnData cf.NewReturnData
+	//区分创建还是更新
+	var arg string
+	if op == "Create" || op == "create" {
+		arg = "创建"
+	} else {
+		arg = "更新"
+	}
+	//绑定post参数
 	clusterconfig := ClusterConfig{}
 	if err := c.ShouldBindJSON(&clusterconfig); err != nil { //如果 JSON 数据无法绑定到结构体，它不会返回错误，而是返回一个布尔值（bool）
-		msg := "集群的配置信息不完整: " + err.Error()
+		msg := arg + "集群的配置信息不完整: " + err.Error()
 		returnData.Status = 400
 		returnData.Message = msg
 		c.JSON(200, returnData)
 		return
 	}
+	//判断集群状态
 	clusterStatus, err := clusterconfig.getClusterStatus()
 	if err != nil {
 		msg := "无法获取集群信息" + err.Error()
@@ -77,48 +85,51 @@ func Add(c *gin.Context) {
 		logs.Error(map[string]interface{}{"error": err.Error()}, "集群失败,无法获取集群信息")
 		return
 	}
-	logs.Info(map[string]interface{}{"集群名称": clusterconfig.DisplayName, "集群ID": clusterconfig.Id}, "开始配置集群")
-	//创建一个集群配置的scret
+	logs.Info(map[string]interface{}{"集群名称": clusterconfig.DisplayName, "集群ID": clusterconfig.Id}, "开始"+arg+"集群")
+
+	//配置scret
 	var clusterSecretConfig corev1.Secret
 	clusterSecretConfig.Name = clusterconfig.Id
 	clusterSecretConfig.Labels = map[string]string{"metadata": "true"}
-	//添加注释，写法由固定map改为动态map
-	//clusterSecretConfig.Annotations = map[string]string{"displayname": ustruct.DisplayName, "city": ustruct.City, "area": ustruct.Area}
+
+	//添加Annotations
 	clusterSecretConfig.Annotations = make(map[string]string)
-	m := utils.Struct2map(clusterStatus)
+	m := utils.Struct2map(clusterStatus) //结构体转map
 	clusterSecretConfig.Annotations = m
 
 	//secret的data字段，需要加密，stringdata自带加密，所以此处直接使用stringdata
 	clusterSecretConfig.StringData = map[string]string{"kubeconfig": clusterconfig.KubeConfig}
-	_, err = cf.ClientSet.CoreV1().Secrets(cf.MetaNamespace).Create(context.TODO(), &clusterSecretConfig, metav1.CreateOptions{})
+
+	if op == "Create" || op == "create" {
+		_, err = cf.ClientSet.CoreV1().Secrets(cf.MetaNamespace).Create(context.TODO(), &clusterSecretConfig, metav1.CreateOptions{})
+	} else {
+		_, err = cf.ClientSet.CoreV1().Secrets(cf.MetaNamespace).Update(context.TODO(), &clusterSecretConfig, metav1.UpdateOptions{})
+	}
+
 	if err != nil {
-		logs.Error(map[string]interface{}{"集群id:": clusterconfig.Id, "集群名称:": clusterconfig.DisplayName}, "集群创建失败")
-		msg := "添加集群失败，secret创建失败" + err.Error()
+		logs.Error(map[string]interface{}{"集群id:": clusterconfig.Id, "集群名称:": clusterconfig.DisplayName}, "集群"+arg+"失败")
+		msg := arg + "集群失败：" + err.Error()
 		returnData.Message = msg
 		returnData.Status = 400
 		c.JSON(http.StatusOK, returnData)
 	} else {
-		logs.Error(map[string]interface{}{"集群id:": clusterconfig.Id, "集群名称:": clusterconfig.DisplayName}, "集群创建成功")
-		msg := "添加集群成功"
+		logs.Error(map[string]interface{}{"集群id:": clusterconfig.Id, "集群名称:": clusterconfig.DisplayName}, "集群"+arg+"成功")
+		msg := arg + "集群成功"
 		returnData.Message = msg
 		returnData.Status = 200
 		c.JSON(http.StatusOK, returnData)
 	}
 }
 
+// 通过secret创建集群，secret中保存集群信息和kubeconfig
+func Add(c *gin.Context) {
+	logs.Info(nil, "添加集群")
+	addOrUpdate(c, "create")
+}
+
 func Update(c *gin.Context) {
 	logs.Info(nil, "更新集群")
-	ustruct := ClusterConfig{}
-	if err := c.ShouldBindJSON(&ustruct); err != nil { //如果 JSON 数据无法绑定到结构体，它不会返回错误，而是返回一个布尔值（bool）
-		c.JSON(http.StatusOK, gin.H{
-			"message": err.Error(),
-			"status":  500,
-		},
-		)
-	} else {
-
-		c.JSON(http.StatusOK, ustruct)
-	}
+	addOrUpdate(c, "update")
 }
 
 // 通过删除secret来删除集群
@@ -129,7 +140,7 @@ func Delete(c *gin.Context) {
 	err = cf.ClientSet.CoreV1().Secrets(cf.MetaNamespace).Delete(context.TODO(), clusterid, metav1.DeleteOptions{})
 	if err != nil {
 		logs.Error(nil, "集群(secret)删除失败")
-		msg := "集群删除失败" + err.Error()
+		msg := "集群删除失败：" + err.Error()
 		returnData.Message = msg
 		returnData.Status = 400
 	} else {
@@ -175,7 +186,7 @@ func List(c *gin.Context) {
 		c.JSON(http.StatusOK, returnData)
 	}
 	logs.Info(nil, "获取集群列表成功")
-	msg := "获取集群列表成功:"
+	msg := "获取集群列表成功"
 	returnData.Message = msg
 	returnData.Status = 200
 	returnData.Data = make(map[string]interface{}) //map
