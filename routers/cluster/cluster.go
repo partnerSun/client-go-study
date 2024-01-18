@@ -12,6 +12,7 @@ func RegisterSubRouters(sgroup *gin.RouterGroup) {
 	DelC(clusterGroup)
 	UpdateC(clusterGroup)
 	GetC(clusterGroup)
+	ListC(clusterGroup)
 
 }
 
@@ -29,4 +30,8 @@ func UpdateC(clusterGroup *gin.RouterGroup) {
 
 func GetC(clusterGroup *gin.RouterGroup) {
 	clusterGroup.GET("/get", cluster.Get)
+}
+
+func ListC(clusterGroup *gin.RouterGroup) {
+	clusterGroup.GET("/list", cluster.List)
 }

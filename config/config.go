@@ -38,6 +38,7 @@ type PodSruct struct {
 type NewReturnData struct {
 	Status  int
 	Message string
+	Data    map[string]interface{}
 }
 
 // 统一日志配置管理

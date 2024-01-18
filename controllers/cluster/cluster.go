@@ -126,7 +126,6 @@ func Delete(c *gin.Context) {
 	var returnData cf.NewReturnData
 	logs.Info(nil, "删除集群")
 	clusterid := c.Query("clusterid")
-	cf.ClientSet, _ = client.ClientSetinit(cf.OutClusterKubeconfig)
 	err = cf.ClientSet.CoreV1().Secrets(cf.MetaNamespace).Delete(context.TODO(), clusterid, metav1.DeleteOptions{})
 	if err != nil {
 		logs.Error(nil, "集群(secret)删除失败")
@@ -142,9 +141,51 @@ func Delete(c *gin.Context) {
 }
 
 func Get(c *gin.Context) {
-	logs.Info(nil, "获取集群信息")
-	ustruct := ClusterConfig{}
-	ustruct.DisplayName = c.Query("displayname")
-	c.JSON(http.StatusOK, ustruct)
+	var returnData cf.NewReturnData
+	logs.Info(nil, "获取某个集群信息")
+	clusterid := c.Query("clusterid")
+	sinfo, err := cf.ClientSet.CoreV1().Secrets(cf.MetaNamespace).Get(context.TODO(), clusterid, metav1.GetOptions{})
+	if err != nil {
+		logs.Error(nil, "获取集群信息失败")
+		msg := "获取集群信息失败:" + err.Error()
+		returnData.Message = msg
+		returnData.Status = 400
+	} else {
+		sName := sinfo.Name
+		sAnnotation := sinfo.Annotations
+		msg := "获取集群信息成功"
+		returnData.Message = msg
+		returnData.Status = 200
+		logs.Info(map[string]interface{}{"集群名称": sName, "其他信息": sAnnotation}, "")
+	}
+	c.JSON(http.StatusOK, returnData)
+}
 
+// 获取集群信息 就是固定ns下的secret列表
+func List(c *gin.Context) {
+	var returnData cf.NewReturnData
+	logs.Info(nil, "获取集群列表")
+	listoptions := metav1.ListOptions{LabelSelector: "metadata=true"} //通过labelselector过滤指定secret
+	slist, err := cf.ClientSet.CoreV1().Secrets(cf.MetaNamespace).List(context.TODO(), listoptions)
+	if err != nil {
+		logs.Error(nil, "获取集群列表失败")
+		msg := "获取集群列表失败:" + err.Error()
+		returnData.Message = msg
+		returnData.Status = 400
+		c.JSON(http.StatusOK, returnData)
+	}
+	logs.Info(nil, "获取集群列表成功")
+	msg := "获取集群列表成功:"
+	returnData.Message = msg
+	returnData.Status = 200
+	returnData.Data = make(map[string]interface{}) //map
+
+	var clusterlist []map[string]string //定义一个变量 用于接收列表信息
+	for _, v := range slist.Items {
+		anno := v.Annotations
+		clusterlist = append(clusterlist, anno)
+	}
+	returnData.Data["iterms"] = clusterlist
+	c.JSON(http.StatusOK, returnData)
+	//logs.Info(nil, slist)
 }
