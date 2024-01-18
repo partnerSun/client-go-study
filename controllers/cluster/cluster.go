@@ -162,12 +162,12 @@ func Get(c *gin.Context) {
 		returnData.Message = msg
 		returnData.Status = 400
 	} else {
-		sName := sinfo.Name
 		sAnnotation := sinfo.Annotations
 		msg := "获取集群信息成功"
 		returnData.Message = msg
 		returnData.Status = 200
-		logs.Info(map[string]interface{}{"集群名称": sName, "其他信息": sAnnotation}, "")
+		returnData.Data = map[string]interface{}{"info": sAnnotation}
+		logs.Info(map[string]interface{}{"集群信息": sAnnotation}, "")
 	}
 	c.JSON(http.StatusOK, returnData)
 }
