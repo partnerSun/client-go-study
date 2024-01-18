@@ -19,7 +19,7 @@ func metaDatainit() {
 	}
 	flag.Parse()
 	//集群外可使用离线的config文件
-	cf.ClientSet = client.ClientSetinit(cf.InClusterKubeconfig)
+	cf.ClientSet, _ = client.ClientSetinit(cf.InClusterKubeconfig)
 	cf.DynamicClient = client.DynamicClientInit(cf.InClusterKubeconfig)
 	//判断命名空间是否存在
 	_, err := cf.ClientSet.CoreV1().Namespaces().Get(context.Background(), cf.MetaNamespace, metav1.GetOptions{})

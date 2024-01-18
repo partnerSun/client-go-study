@@ -20,7 +20,7 @@ func AddC(clusterGroup *gin.RouterGroup) {
 }
 
 func DelC(clusterGroup *gin.RouterGroup) {
-	clusterGroup.POST("/del", cluster.Delete)
+	clusterGroup.GET("/delete", cluster.Delete)
 }
 
 func UpdateC(clusterGroup *gin.RouterGroup) {
