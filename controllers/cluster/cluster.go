@@ -33,20 +33,20 @@ type ClusterStatus struct {
 	Status  string
 }
 
-var err error
+//var err error
 
 // 结构体方法，判断集群状态
 func (c *ClusterConfig) getClusterStatus() (ClusterStatus, error) {
 	clusterStatus := ClusterStatus{}
 	clusterStatus.ClusterInfo = c.ClusterInfo
-	cf.ClientSet, err = client.ClientSetinitByString(c.KubeConfig)
+	clientSet, err := client.ClientSetinitByString(c.KubeConfig)
 
 	if err != nil {
 		logs.Error(nil, "kubeconfig配置有问题，生成Clientset出错")
 		return clusterStatus, err
 	}
 	var cversion *version.Info
-	cversion, err = cf.ClientSet.Discovery().ServerVersion()
+	cversion, err = clientSet.Discovery().ServerVersion()
 	if err != nil {
 		return clusterStatus, err
 	}
@@ -136,7 +136,7 @@ func Delete(c *gin.Context) {
 	var returnData cf.NewReturnData
 	logs.Info(nil, "删除集群")
 	clusterid := c.Query("clusterid")
-	err = cf.ClientSet.CoreV1().Secrets(cf.MetaNamespace).Delete(context.TODO(), clusterid, metav1.DeleteOptions{})
+	err := cf.ClientSet.CoreV1().Secrets(cf.MetaNamespace).Delete(context.TODO(), clusterid, metav1.DeleteOptions{})
 	if err != nil {
 		logs.Error(nil, "集群(secret)删除失败")
 		msg := "集群删除失败：" + err.Error()

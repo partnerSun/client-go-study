@@ -44,6 +44,7 @@ func ParseJwtToken(tokenString string) (*MyCustomClaims, error) {
 		func(token *jwt.Token) (interface{}, error) {
 			return mySigningKey, nil
 		})
+
 	if err != nil {
 		logs.Error(nil, "token解析失败")
 		return nil, err

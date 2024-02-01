@@ -19,13 +19,14 @@ var (
 	DeploymentName       string
 	Replicas             int32
 	Image                string
-	ClientSet            *kubernetes.Clientset
-	DynamicClient        *dynamic.DynamicClient
+	ClientSet            *kubernetes.Clientset  //全局变量,注意与局部的分开
+	DynamicClient        *dynamic.DynamicClient //全局变量,注意与局部的分开
 	Port                 string
 	SigningKey           string
 	JwtExpireTime        int64 //过期时间 分钟
 	Username             string
 	Password             string
+	ClusterKubeConfig    map[string]string //保存集群对应的kubeconfig，["clusterid"]kubeconfig
 )
 
 type PodSruct struct {

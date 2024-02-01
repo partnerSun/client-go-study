@@ -31,6 +31,7 @@ func metaDataInit2(MetaNamespace string) {
 			panic(err.Error())
 		}
 		logs.Info(map[string]interface{}{"当前集群版本": inClusterVersion}, "元数据命名空间创建成功")
+		
 	}
 
 }
