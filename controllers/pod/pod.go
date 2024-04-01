@@ -4,7 +4,6 @@ import (
 	cf "client-go-study/config"
 	"client-go-study/pod"
 	"client-go-study/utils/logs"
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )
@@ -98,7 +97,14 @@ func Delete(c *gin.Context) {
 
 func List(c *gin.Context) {
 	ustruct := podInfo{}
-	podStatusMap := make(map[string]string)
+	var returnData cf.NewReturnData
+	//var podStatusMap map[string]string
+	msg := "获取集群列表成功"
+	returnData.Message = msg
+	returnData.Status = 200
+	returnData.Data = make(map[string]interface{})
+	var podStatusSlice []map[string]interface{}
+	podlistmap := make(map[string]interface{})
 	ustruct.NameSpace = c.Query("namespace")
 	podlist, err := pod.AllPodStatusList(ustruct.NameSpace)
 	//fmt.Println("podlist", podlist)
@@ -111,13 +117,14 @@ func List(c *gin.Context) {
 		c.Abort()
 	} else {
 		for _, pod := range podlist.Items {
-			fmt.Printf(" - Name: %s, State: %s\n", pod.Name, pod.Status.Phase)
-			podStatusMap[pod.Name] = string(pod.Status.Phase)
+			//fmt.Printf(" - Name: %s, State: %s\n", pod.Name, pod.Status.Phase)
+			podlistmap["name"] = pod.Name
+			podlistmap["status"] = string(pod.Status.Phase)
+			//fmt.Println("podlistmap:", podlistmap)
+			podStatusSlice = append(podStatusSlice, podlistmap)
 		}
-		c.JSON(http.StatusOK, gin.H{
-			"message": podStatusMap,
-			"status":  200,
-		})
+		returnData.Data["iterms"] = podStatusSlice
+		c.JSON(http.StatusOK, returnData)
 	}
 
 }

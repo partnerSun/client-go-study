@@ -73,7 +73,7 @@ func init() {
 
 	logs.Debug(nil, "init函数启动成功")
 	viper.SetDefault("loglevel", "debug")
-	viper.SetDefault("port", ":18080")
+	viper.SetDefault("port", "0.0.0.0:18080")
 	//jwt过期时间配置
 	viper.SetDefault("Jwt_ExpireTime", 4320) //两小时有效期
 	//jwt加密secret
