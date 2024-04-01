@@ -116,7 +116,7 @@ func addOrUpdate(c *gin.Context, op string) {
 		returnData.Status = 400
 		c.JSON(http.StatusOK, returnData)
 	} else {
-		logs.Error(map[string]interface{}{"Namespaceid:": clusterconfig.Id, "Namespace名称:": clusterconfig.DisplayName}, "Namespace"+arg+"成功")
+		logs.Info(map[string]interface{}{"Namespaceid:": clusterconfig.Id, "Namespace名称:": clusterconfig.DisplayName}, "Namespace"+arg+"成功")
 		msg := arg + "Namespace成功"
 		returnData.Message = msg
 		returnData.Status = 200
