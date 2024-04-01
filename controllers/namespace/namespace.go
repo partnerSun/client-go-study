@@ -2,58 +2,41 @@ package namespace
 
 import (
 	cf "client-go-study/config"
-	"client-go-study/utils"
-	"client-go-study/utils/client"
 	"client-go-study/utils/logs"
 	"context"
 	"github.com/gin-gonic/gin"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/version"
 	"net/http"
+	"strings"
 )
 
-type NameSpaceInfo struct {
-	Id          string `json:"id"`
-	DisplayName string `json:"displayname"`
-	City        string `json:"city"`
-	Area        string `json:"area"`
+type NsBasicInfo struct {
+	ClusterId string `json:"clusterid"`
+	NameSpace string `json:"namespace"`
+	Name      string `json:"name"`
 }
 
-// 描述Namespace所用的配置信息
-type NameSpaceConfig struct {
-	NameSpaceInfo
-	KubeConfig string `json:"kubeconfig"`
-}
-
-// 描述Namespace状态
-type NameSpaceStatus struct {
-	NameSpaceInfo
-	Version string
-	Status  string
-}
+//type NsInfo struct {
+//	NsBasicInfo
+//	status string
+//}
 
 var err error
 
 // 结构体方法，判断Namespace状态
-func (c *NameSpaceConfig) getClusterStatus() (NameSpaceStatus, error) {
-	clusterStatus := NameSpaceStatus{}
-	clusterStatus.NameSpaceInfo = c.NameSpaceInfo
-
-	cf.ClientSet, err = client.ClientSetinitByString(c.KubeConfig)
-
+func getNameSpaceStatus(name string) error {
+	_, err := cf.ClientSet.CoreV1().Namespaces().Get(context.TODO(), name, metav1.GetOptions{})
+	//fmt.Println("nsGet------error:", err.Error())
 	if err != nil {
-		logs.Error(nil, "kubeconfig配置有问题，生成Clientset出错")
-		return clusterStatus, err
+		//ns不存在时 error忽略
+		if strings.Contains(err.Error(), "not found") {
+			return nil
+		}
+		return err
 	}
-	var cversion *version.Info
-	cversion, err = cf.ClientSet.Discovery().ServerVersion()
-	if err != nil {
-		return clusterStatus, err
-	}
-	clusterStatus.Version = cversion.String()
-	clusterStatus.Status = "Active"
-	return clusterStatus, nil
+	//nsStatus.status = string(ns.Status.Phase)
+	return nil
 }
 
 // 提取相同逻辑，添加和更新Namespace功能
@@ -67,7 +50,7 @@ func addOrUpdate(c *gin.Context, op string) {
 		arg = "更新"
 	}
 	//绑定post参数
-	clusterconfig := NameSpaceConfig{}
+	clusterconfig := NsBasicInfo{}
 	if err := c.ShouldBindJSON(&clusterconfig); err != nil { //如果 JSON 数据无法绑定到结构体，它不会返回错误，而是返回一个布尔值（bool）
 		msg := arg + "Namespace的配置信息不完整: " + err.Error()
 		returnData.Status = 400
@@ -76,27 +59,25 @@ func addOrUpdate(c *gin.Context, op string) {
 		return
 	}
 	//判断Namespace状态
-	clusterStatus, err := clusterconfig.getClusterStatus()
+	err := getNameSpaceStatus(clusterconfig.Name)
 	if err != nil {
-		msg := "无法获取Namespace信息" + err.Error()
+		msg := "无法获取Namespace信息:" + err.Error()
 		returnData.Message = msg
 		returnData.Status = 400
 		c.JSON(http.StatusOK, returnData)
 		logs.Error(map[string]interface{}{"error": err.Error()}, "Namespace失败,无法获取Namespace信息")
 		return
 	}
-	logs.Info(map[string]interface{}{"Namespace名称": clusterconfig.DisplayName, "NamespaceID": clusterconfig.Id}, "开始"+arg+"Namespace")
+	logs.Info(map[string]interface{}{"Namespace名称": clusterconfig.Name}, "开始"+arg+"Namespace")
 
 	//配置scret
 	var clusterNamespace corev1.Namespace
 
-	clusterNamespace.Name = clusterconfig.Id
+	clusterNamespace.Name = clusterconfig.Name
 	clusterNamespace.Labels = map[string]string{"metadata": "true"}
 
 	//添加Annotations
-	clusterNamespace.Annotations = make(map[string]string)
-	m := utils.Struct2map(clusterStatus) //结构体转map
-	clusterNamespace.Annotations = m
+	clusterNamespace.Annotations = map[string]string{"clusterid": clusterconfig.Name}
 
 	//secret的data字段，需要加密，stringdata自带加密，所以此处直接使用stringdata
 	//clusterNamespace.StringData = map[string]string{"kubeconfig": clusterconfig.KubeConfig}
@@ -110,13 +91,13 @@ func addOrUpdate(c *gin.Context, op string) {
 	}
 
 	if err != nil {
-		logs.Error(map[string]interface{}{"Namespaceid:": clusterconfig.Id, "Namespace名称:": clusterconfig.DisplayName}, "Namespace"+arg+"失败")
+		logs.Error(map[string]interface{}{"Namespace名称:": clusterconfig.Name}, "Namespace"+arg+"失败")
 		msg := arg + "Namespace失败：" + err.Error()
 		returnData.Message = msg
 		returnData.Status = 400
 		c.JSON(http.StatusOK, returnData)
 	} else {
-		logs.Info(map[string]interface{}{"Namespaceid:": clusterconfig.Id, "Namespace名称:": clusterconfig.DisplayName}, "Namespace"+arg+"成功")
+		logs.Info(map[string]interface{}{"Namespace名称:": clusterconfig.Name}, "Namespace"+arg+"成功")
 		msg := arg + "Namespace成功"
 		returnData.Message = msg
 		returnData.Status = 200
@@ -139,22 +120,75 @@ func Update(c *gin.Context) {
 // 删除Namespace
 func Delete(c *gin.Context) {
 	var returnData cf.NewReturnData
-	logs.Info(nil, "删除Namespace")
+
+	clusterconfig := NsBasicInfo{}
+	clusterconfig.Name = c.Query("name")
+	err := cf.ClientSet.CoreV1().Namespaces().Delete(context.TODO(), clusterconfig.Name, metav1.DeleteOptions{})
+	if err != nil {
+		msg := "Namespace删除失败:" + err.Error()
+		returnData.Message = msg
+		returnData.Status = 400
+		c.JSON(http.StatusOK, returnData)
+		logs.Error(map[string]interface{}{"error": err.Error()}, "Namespace删除失败")
+		return
+	}
+	logs.Info(nil, "成功删除Namespace"+clusterconfig.Name)
+	msg := "删除Namespace " + clusterconfig.Name + " 成功"
+	returnData.Message = msg
+	returnData.Status = 200
 	c.JSON(http.StatusOK, returnData)
 }
 
 // 查询Namespace信息
 func Get(c *gin.Context) {
 	var returnData cf.NewReturnData
-	logs.Info(nil, "获取Namespace信息")
-
+	//logs.Info(nil, "获取Namespace信息")
+	clusterconfig := NsBasicInfo{}
+	clusterconfig.Name = c.Query("name")
+	err := getNameSpaceStatus(clusterconfig.Name)
+	if err != nil {
+		msg := "Namespace获取失败:" + err.Error()
+		returnData.Message = msg
+		returnData.Status = 400
+		c.JSON(http.StatusOK, returnData)
+		logs.Error(map[string]interface{}{"error": err.Error()}, "Namespace失败,无法获取Namespace信息")
+		return
+	}
+	msg := "获取Namespace " + clusterconfig.Name + " 成功"
+	returnData.Message = msg
+	returnData.Status = 200
 	c.JSON(http.StatusOK, returnData)
 }
 
 // 获取Namespace列表
 func List(c *gin.Context) {
 	var returnData cf.NewReturnData
-	logs.Info(nil, "获取Namespace列表")
+	nsAllList, err := cf.ClientSet.CoreV1().Namespaces().List(context.TODO(), metav1.ListOptions{})
+	if err != nil {
+		msg := "获取Namespace列表失败:" + err.Error()
+		returnData.Message = msg
+		returnData.Status = 400
+		c.JSON(http.StatusOK, returnData)
+		logs.Error(map[string]interface{}{"error": err.Error()}, "获取Namespace列表失败")
+		return
+	}
+	returnData.Data = make(map[string]interface{}) //map
+
+	var nslist []map[string]string
+	for _, v := range nsAllList.Items {
+		//anno := v.
+		nslist = append(nslist, map[string]string{
+			//"namespace": v.ObjectMeta.Name,
+			"phase": string(v.Status.Phase),
+			"name":  v.ObjectMeta.Name,
+
+			// 可以根据需要添加其他字段
+		})
+	}
+	logs.Info(nil, "获取Namespace列表成功")
+	msg := "获取Namespace列表成功"
+	returnData.Message = msg
+	returnData.Status = 200
+	returnData.Data["iterms"] = nslist
 	c.JSON(http.StatusOK, returnData)
-	//logs.Info(nil, slist)
 }
