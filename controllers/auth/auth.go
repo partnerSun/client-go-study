@@ -1,10 +1,10 @@
 package auth
 
 import (
+	"client-go-study/config"
+	"client-go-study/utils/jwtutils"
+	"client-go-study/utils/logs"
 	"github.com/gin-gonic/gin"
-	"goStudy/config"
-	"goStudy/utils/jwtutils"
-	"goStudy/utils/logs"
 	"net/http"
 )
 

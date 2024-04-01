@@ -1,13 +1,13 @@
 package main
 
 import (
+	_ "client-go-study/config"
+	_ "client-go-study/controllers/initcontroller"
+	"client-go-study/middlewares"
+	"client-go-study/routers"
+	"client-go-study/utils/jwtutils"
 	"fmt"
 	"github.com/gin-gonic/gin"
-	_ "goStudy/config"
-	_ "goStudy/controllers/initcontroller"
-	"goStudy/middlewares"
-	"goStudy/routers"
-	"goStudy/utils/jwtutils"
 )
 
 func main() {

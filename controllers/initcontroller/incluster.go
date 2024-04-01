@@ -1,11 +1,11 @@
 package initcontroller
 
 import (
+	cf "client-go-study/config"
+	"client-go-study/utils/client"
 	"context"
 	"flag"
 	"fmt"
-	cf "goStudy/config"
-	"goStudy/utils/client"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/util/homedir"

@@ -1,7 +1,7 @@
 package utils
 
 import (
-	"goStudy/utils/logs"
+	"client-go-study/utils/logs"
 	"k8s.io/apimachinery/pkg/util/json"
 )
 
@@ -12,6 +12,6 @@ func Struct2map(s interface{}) map[string]string {
 	}
 	m := make(map[string]string)
 	json.Unmarshal(j, &m)
-	
+
 	return m
 }

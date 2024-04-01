@@ -1,10 +1,10 @@
 package pod
 
 import (
+	cf "client-go-study/config"
+	_ "client-go-study/controllers/initcontroller"
 	"context"
 	"fmt"
-	cf "goStudy/config"
-	_ "goStudy/controllers/initcontroller"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"os"
@@ -87,10 +87,11 @@ func PodInfoCheck(ns string, podName string) {
 	// 你可以根据实际需求，进一步处理获取到的 Pod 详细信息
 
 }
-func DelPod(ns string, podName string) {
+func DelPod(ns string, podName string) (*corev1.Pod, error) {
 	_, err := GetPod(ns, podName)
 	if err != nil {
 		fmt.Printf("Error! failed getting Pod %s in namespace %s: %s\n", podName, ns, err.Error())
+		return nil, err
 		os.Exit(1)
 		//os.Exit(1)
 	}
@@ -99,21 +100,27 @@ func DelPod(ns string, podName string) {
 	err = cf.ClientSet.CoreV1().Pods(ns).Delete(context.TODO(), podName, metav1.DeleteOptions{})
 	if err != nil {
 		fmt.Printf("Error! failed to Delele pod %s:%s", podName, err.Error())
+		return nil, err
 		os.Exit(1)
 	}
 	fmt.Printf("Delele pod %s success", podName)
+	return nil, nil
 }
-func AllPodStatusList(ns string) {
+
+func AllPodStatusList(ns string) (*corev1.PodList, error) {
 
 	// 查询 Pod 列表
 	pods, err := cf.ClientSet.CoreV1().Pods(ns).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		fmt.Printf("Error getting Pod list: %v\n", err)
 		os.Exit(1)
+		return nil, err
 	}
 	// 打印 Pod 名称
 	fmt.Printf("Pods in namespace %s:\n", ns)
 	for _, pod := range pods.Items {
 		fmt.Printf(" - Name: %s, State: %s\n", pod.Name, pod.Status.Phase)
+		//return pod, err
 	}
+	return pods, nil
 }

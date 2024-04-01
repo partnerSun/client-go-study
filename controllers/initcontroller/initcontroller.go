@@ -1,6 +1,6 @@
 package initcontroller
 
-import cf "goStudy/config"
+import cf "client-go-study/config"
 
 // clientset创建唯一入口
 func init() {

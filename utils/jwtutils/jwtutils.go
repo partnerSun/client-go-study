@@ -1,10 +1,10 @@
 package jwtutils
 
 import (
+	"client-go-study/config"
+	"client-go-study/utils/logs"
 	"errors"
 	"github.com/golang-jwt/jwt/v5"
-	"goStudy/config"
-	"goStudy/utils/logs"
 	"time"
 )
 

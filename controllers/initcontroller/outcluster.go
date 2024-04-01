@@ -1,10 +1,10 @@
 package initcontroller
 
 import (
+	cf "client-go-study/config"
+	"client-go-study/utils/client"
+	"client-go-study/utils/logs"
 	"context"
-	cf "goStudy/config"
-	"goStudy/utils/client"
-	"goStudy/utils/logs"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -31,7 +31,7 @@ func metaDataInit2(MetaNamespace string) {
 			panic(err.Error())
 		}
 		logs.Info(map[string]interface{}{"当前集群版本": inClusterVersion}, "元数据命名空间创建成功")
-		
+
 	}
 
 }

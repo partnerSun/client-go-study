@@ -2,12 +2,12 @@
 package routers
 
 import (
+	"client-go-study/config"
+	"client-go-study/routers/auth"
+	"client-go-study/routers/cluster"
+	"client-go-study/routers/namespace"
+	"client-go-study/routers/pod"
 	"github.com/gin-gonic/gin"
-	"goStudy/config"
-	"goStudy/routers/auth"
-	"goStudy/routers/cluster"
-	"goStudy/routers/namespace"
-	"goStudy/routers/pod"
 )
 
 func RegisterRouters(r *gin.Engine) {

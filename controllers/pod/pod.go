@@ -1,10 +1,11 @@
 package pod
 
 import (
+	cf "client-go-study/config"
+	"client-go-study/pod"
+	"client-go-study/utils/logs"
+	"fmt"
 	"github.com/gin-gonic/gin"
-	cf "goStudy/config"
-	"goStudy/pod"
-	"goStudy/utils/logs"
 	"net/http"
 )
 
@@ -19,6 +20,7 @@ func Get(c *gin.Context) {
 	ustruct.NameSpace = c.Query("namespace")
 	ustruct.PodName = c.Query("podname")
 	podinfo, err := pod.GetPod(ustruct.NameSpace, ustruct.PodName)
+
 	if err != nil {
 		logs.Error(nil, err.Error())
 		c.JSON(http.StatusOK, gin.H{
@@ -59,6 +61,63 @@ func Create(c *gin.Context) {
 				"status":  200,
 			})
 		}
+	}
+
+}
+
+func Delete(c *gin.Context) {
+	ustruct := podInfo{}
+	ustruct.NameSpace = c.Query("namespace")
+	ustruct.PodName = c.Query("podname")
+	if err := c.ShouldBindJSON(&ustruct); err != nil { //如果 JSON 数据无法绑定到结构体，它不会返回错误，而是返回一个布尔值（bool）
+		c.JSON(http.StatusOK, gin.H{
+			"message": err.Error(),
+			"status":  500,
+		},
+		)
+	} else {
+		//c.JSON(http.StatusOK, ustruct)
+		_, err := pod.DelPod(ustruct.NameSpace, ustruct.PodName)
+		if err != nil {
+			logs.Error(nil, err.Error())
+			c.JSON(http.StatusOK, gin.H{
+				"message": err.Error(),
+				"status":  500,
+			})
+			c.Abort()
+		} else {
+			c.JSON(http.StatusOK, gin.H{
+				"message": "pod删除成功",
+
+				"status": 200,
+			})
+		}
+	}
+
+}
+
+func List(c *gin.Context) {
+	ustruct := podInfo{}
+	podStatusMap := make(map[string]string)
+	ustruct.NameSpace = c.Query("namespace")
+	podlist, err := pod.AllPodStatusList(ustruct.NameSpace)
+	//fmt.Println("podlist", podlist)
+	if err != nil {
+		logs.Error(nil, err.Error())
+		c.JSON(http.StatusOK, gin.H{
+			"message": "pod获取失败",
+			"status":  404,
+		})
+		c.Abort()
+	} else {
+		for _, pod := range podlist.Items {
+			fmt.Printf(" - Name: %s, State: %s\n", pod.Name, pod.Status.Phase)
+			podStatusMap[pod.Name] = string(pod.Status.Phase)
+		}
+		c.JSON(http.StatusOK, gin.H{
+			"message": podStatusMap,
+			"status":  200,
+		})
 	}
 
 }

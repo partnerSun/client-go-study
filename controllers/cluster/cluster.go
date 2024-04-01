@@ -1,12 +1,12 @@
 package cluster
 
 import (
+	cf "client-go-study/config"
+	"client-go-study/utils"
+	"client-go-study/utils/client"
+	"client-go-study/utils/logs"
 	"context"
 	"github.com/gin-gonic/gin"
-	cf "goStudy/config"
-	"goStudy/utils"
-	"goStudy/utils/client"
-	"goStudy/utils/logs"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/version"

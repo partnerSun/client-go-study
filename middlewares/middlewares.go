@@ -1,9 +1,9 @@
 package middlewares
 
 import (
+	"client-go-study/utils/jwtutils"
+	"client-go-study/utils/logs"
 	"github.com/gin-gonic/gin"
-	"goStudy/utils/jwtutils"
-	"goStudy/utils/logs"
 	"net/http"
 )
 

@@ -1,8 +1,8 @@
 package client
 
 import (
+	"client-go-study/utils/logs"
 	"fmt"
-	"goStudy/utils/logs"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"

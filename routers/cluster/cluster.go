@@ -1,8 +1,8 @@
 package cluster
 
 import (
+	"client-go-study/controllers/cluster"
 	"github.com/gin-gonic/gin"
-	"goStudy/controllers/cluster"
 )
 
 // 子路由

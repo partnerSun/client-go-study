@@ -1,8 +1,8 @@
 package namespace
 
 import (
+	"client-go-study/controllers/namespace"
 	"github.com/gin-gonic/gin"
-	"goStudy/controllers/namespace"
 )
 
 // 子路由

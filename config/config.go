@@ -1,9 +1,9 @@
 package config
 
 import (
+	"client-go-study/utils/logs"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
-	"goStudy/utils/logs"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 )
@@ -75,7 +75,7 @@ func init() {
 	viper.SetDefault("loglevel", "debug")
 	viper.SetDefault("port", ":18080")
 	//jwt过期时间配置
-	viper.SetDefault("Jwt_ExpireTime", 120) //两小时有效期
+	viper.SetDefault("Jwt_ExpireTime", 4320) //两小时有效期
 	//jwt加密secret
 	viper.SetDefault("JWT_SigningKey", "this_is_a_siginKey")
 	//设置默认用户名密码

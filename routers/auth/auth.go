@@ -1,8 +1,8 @@
 package auth
 
 import (
+	"client-go-study/controllers/auth"
 	"github.com/gin-gonic/gin"
-	"goStudy/controllers/auth"
 )
 
 func login(authgroup *gin.RouterGroup) {
