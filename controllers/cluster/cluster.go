@@ -200,7 +200,7 @@ func List(c *gin.Context) {
 		anno := v.Annotations
 		clusterlist = append(clusterlist, anno)
 	}
-	returnData.Data["iterms"] = clusterlist
+	returnData.Data["items"] = clusterlist
 	c.JSON(http.StatusOK, returnData)
 	//logs.Info(nil, slist)
 }

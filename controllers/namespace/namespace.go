@@ -12,9 +12,10 @@ import (
 )
 
 type NsBasicInfo struct {
-	ClusterId string `json:"clusterid"`
-	NameSpace string `json:"namespace"`
-	Name      string `json:"name"`
+	ClusterId string      `json:"clusterid" form:"clusterid"`
+	NameSpace string      `json:"namespace" form:"namespace"`
+	Name      string      `json:"name" form:"name"`
+	Items     interface{} `json:"items" form:"items"`
 }
 
 //type NsInfo struct {
@@ -25,18 +26,18 @@ type NsBasicInfo struct {
 var err error
 
 // 结构体方法，判断Namespace状态
-func getNameSpaceStatus(name string) error {
-	_, err := cf.ClientSet.CoreV1().Namespaces().Get(context.TODO(), name, metav1.GetOptions{})
+func getNameSpaceStatus(name string) (*corev1.Namespace, error) {
+	nsinfo, err := cf.ClientSet.CoreV1().Namespaces().Get(context.TODO(), name, metav1.GetOptions{})
 	//fmt.Println("nsGet------error:", err.Error())
 	if err != nil {
 		//ns不存在时 error忽略
-		if strings.Contains(err.Error(), "not found") {
-			return nil
-		}
-		return err
+		//if strings.Contains(err.Error(), "not found") {
+		//	return nil, nil
+		//}
+		return nil, err
 	}
 	//nsStatus.status = string(ns.Status.Phase)
-	return nil
+	return nsinfo, nil
 }
 
 // 提取相同逻辑，添加和更新Namespace功能
@@ -59,28 +60,26 @@ func addOrUpdate(c *gin.Context, op string) {
 		return
 	}
 	//判断Namespace状态
-	err := getNameSpaceStatus(clusterconfig.Name)
+	_, err := getNameSpaceStatus(clusterconfig.Name)
 	if err != nil {
-		msg := "无法获取Namespace信息:" + err.Error()
-		returnData.Message = msg
-		returnData.Status = 400
-		c.JSON(http.StatusOK, returnData)
-		logs.Error(map[string]interface{}{"error": err.Error()}, "Namespace失败,无法获取Namespace信息")
-		return
+		if strings.Contains(err.Error(), "not found") {
+			logs.Info(map[string]interface{}{"Namespace名称": clusterconfig.Name}, "开始"+arg+"Namespace")
+		} else {
+			msg := "无法获取Namespace信息:" + err.Error()
+			returnData.Message = msg
+			returnData.Status = 400
+			c.JSON(http.StatusOK, returnData)
+			logs.Error(map[string]interface{}{"error": err.Error()}, "Namespace失败,无法获取Namespace信息")
+			return
+		}
+
 	}
-	logs.Info(map[string]interface{}{"Namespace名称": clusterconfig.Name}, "开始"+arg+"Namespace")
-
-	//配置scret
+	//用于创建ns
 	var clusterNamespace corev1.Namespace
-
 	clusterNamespace.Name = clusterconfig.Name
 	clusterNamespace.Labels = map[string]string{"metadata": "true"}
-
-	//添加Annotations
 	clusterNamespace.Annotations = map[string]string{"clusterid": clusterconfig.Name}
-
-	//secret的data字段，需要加密，stringdata自带加密，所以此处直接使用stringdata
-	//clusterNamespace.StringData = map[string]string{"kubeconfig": clusterconfig.KubeConfig}
+	//用于更新ns
 
 	if op == "Create" || op == "create" {
 		//_, err = cf.ClientSet.CoreV1().Secrets(cf.MetaNamespace).Create(context.TODO(), &clusterSecretConfig, metav1.CreateOptions{})
@@ -145,7 +144,8 @@ func Get(c *gin.Context) {
 	//logs.Info(nil, "获取Namespace信息")
 	clusterconfig := NsBasicInfo{}
 	clusterconfig.Name = c.Query("name")
-	err := getNameSpaceStatus(clusterconfig.Name)
+	//nsinfo, err := cf.ClientSet.CoreV1().Namespaces().Get(context.TODO(), clusterconfig.Name, metav1.GetOptions{})
+	nsinfo, err := getNameSpaceStatus(clusterconfig.Name)
 	if err != nil {
 		msg := "Namespace获取失败:" + err.Error()
 		returnData.Message = msg
@@ -157,12 +157,18 @@ func Get(c *gin.Context) {
 	msg := "获取Namespace " + clusterconfig.Name + " 成功"
 	returnData.Message = msg
 	returnData.Status = 200
+	returnData.Data = make(map[string]interface{})
+	//var nslist []map[string]string
+	//nslist = append(nslist, nsinfo.)
+	returnData.Data["items"] = nsinfo
 	c.JSON(http.StatusOK, returnData)
 }
 
 // 获取Namespace列表
 func List(c *gin.Context) {
 	var returnData cf.NewReturnData
+	//clusterconfig := NsBasicInfo{}
+	//clusterconfig.ClusterId = c.Query("clusterid")
 	nsAllList, err := cf.ClientSet.CoreV1().Namespaces().List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		msg := "获取Namespace列表失败:" + err.Error()
@@ -174,21 +180,21 @@ func List(c *gin.Context) {
 	}
 	returnData.Data = make(map[string]interface{}) //map
 
-	var nslist []map[string]string
-	for _, v := range nsAllList.Items {
-		//anno := v.
-		nslist = append(nslist, map[string]string{
-			//"namespace": v.ObjectMeta.Name,
-			"phase": string(v.Status.Phase),
-			"name":  v.ObjectMeta.Name,
-
-			// 可以根据需要添加其他字段
-		})
-	}
+	//var nslist []map[string]string
+	//for _, v := range nsAllList.Items {
+	//	//anno := v.
+	//	nslist = append(nslist, map[string]string{
+	//		//"namespace": v.ObjectMeta.Name,
+	//		"phase": string(v.Status.Phase),
+	//		"name":  v.ObjectMeta.Name,
+	//
+	//		// 可以根据需要添加其他字段
+	//	})
+	//}
 	logs.Info(nil, "获取Namespace列表成功")
 	msg := "获取Namespace列表成功"
 	returnData.Message = msg
 	returnData.Status = 200
-	returnData.Data["iterms"] = nslist
+	returnData.Data["items"] = nsAllList
 	c.JSON(http.StatusOK, returnData)
 }
