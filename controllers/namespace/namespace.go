@@ -8,7 +8,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"net/http"
-	"strings"
 )
 
 type NsBasicInfo struct {
@@ -25,79 +24,33 @@ type NsBasicInfo struct {
 
 var err error
 
-// 结构体方法，判断Namespace状态
-func getNameSpaceStatus(name string) (*corev1.Namespace, error) {
-	nsinfo, err := cf.ClientSet.CoreV1().Namespaces().Get(context.TODO(), name, metav1.GetOptions{})
-	//fmt.Println("nsGet------error:", err.Error())
-	if err != nil {
-		//ns不存在时 error忽略
-		//if strings.Contains(err.Error(), "not found") {
-		//	return nil, nil
-		//}
-		return nil, err
-	}
-	//nsStatus.status = string(ns.Status.Phase)
-	return nsinfo, nil
-}
-
-// 提取相同逻辑，添加和更新Namespace功能
-func addOrUpdate(c *gin.Context, op string) {
+func add(c *gin.Context) {
 	var returnData cf.NewReturnData
-	//区分创建还是更新
-	var arg string
-	if op == "Create" || op == "create" {
-		arg = "创建"
-	} else {
-		arg = "更新"
-	}
 	//绑定post参数
 	clusterconfig := NsBasicInfo{}
 	if err := c.ShouldBindJSON(&clusterconfig); err != nil { //如果 JSON 数据无法绑定到结构体，它不会返回错误，而是返回一个布尔值（bool）
-		msg := arg + "Namespace的配置信息不完整: " + err.Error()
+		msg := "Namespace的配置信息不完整: " + err.Error()
 		returnData.Status = 400
 		returnData.Message = msg
 		c.JSON(200, returnData)
 		return
 	}
-	//判断Namespace状态
-	_, err := getNameSpaceStatus(clusterconfig.Name)
-	if err != nil {
-		if strings.Contains(err.Error(), "not found") {
-			logs.Info(map[string]interface{}{"Namespace名称": clusterconfig.Name}, "开始"+arg+"Namespace")
-		} else {
-			msg := "无法获取Namespace信息:" + err.Error()
-			returnData.Message = msg
-			returnData.Status = 400
-			c.JSON(http.StatusOK, returnData)
-			logs.Error(map[string]interface{}{"error": err.Error()}, "Namespace失败,无法获取Namespace信息")
-			return
-		}
 
-	}
-	//用于创建ns
+	////用于创建ns
 	var clusterNamespace corev1.Namespace
 	clusterNamespace.Name = clusterconfig.Name
-	clusterNamespace.Labels = map[string]string{"metadata": "true"}
-	clusterNamespace.Annotations = map[string]string{"clusterid": clusterconfig.Name}
-	//用于更新ns
 
-	if op == "Create" || op == "create" {
-		//_, err = cf.ClientSet.CoreV1().Secrets(cf.MetaNamespace).Create(context.TODO(), &clusterSecretConfig, metav1.CreateOptions{})
-		_, err = cf.ClientSet.CoreV1().Namespaces().Create(context.TODO(), &clusterNamespace, metav1.CreateOptions{})
-
-	} else {
-		_, err = cf.ClientSet.CoreV1().Namespaces().Update(context.TODO(), &clusterNamespace, metav1.UpdateOptions{})
-	}
+	_, err = cf.ClientSet.CoreV1().Namespaces().Create(context.TODO(), &clusterNamespace, metav1.CreateOptions{})
 
 	if err != nil {
-		logs.Error(map[string]interface{}{"Namespace名称:": clusterconfig.Name}, "Namespace"+arg+"失败")
-		msg := arg + "Namespace失败：" + err.Error()
+		logs.Error(map[string]interface{}{"Namespace名称:": clusterconfig.Name}, "Namespace创建失败")
+		msg := "Namespace创建失败：" + err.Error()
 		returnData.Message = msg
 		returnData.Status = 400
 		c.JSON(http.StatusOK, returnData)
 	} else {
-		logs.Info(map[string]interface{}{"Namespace名称:": clusterconfig.Name}, "Namespace"+arg+"成功")
-		msg := arg + "Namespace成功"
+		logs.Info(map[string]interface{}{"Namespace名称:": clusterconfig.Name}, "Namespace创建成功")
+		msg := "Namespace创建成功"
 		returnData.Message = msg
 		returnData.Status = 200
 		c.JSON(http.StatusOK, returnData)
@@ -107,19 +60,53 @@ func addOrUpdate(c *gin.Context, op string) {
 // 创建Namespace
 func Create(c *gin.Context) {
 	logs.Info(nil, "添加Namespace")
-	addOrUpdate(c, "create")
+	add(c)
+}
+
+func abc(c *gin.Context, item interface{}) (nsbasic NsBasicInfo, err2 error) {
+	//绑定post参数
+	clusterconfig := NsBasicInfo{}
+	clusterconfig.Items = item
+	if err := c.ShouldBindJSON(&clusterconfig); err != nil { //如果 JSON 数据无法绑定到结构体，它不会返回错误，而是返回一个布尔值（bool）
+		return nsbasic, err
+	}
+	return clusterconfig, nil
 }
 
 // 更新Namespace
 func Update(c *gin.Context) {
 	logs.Info(nil, "更新Namespace")
-	addOrUpdate(c, "update")
+	//addOrUpdate(c, "update")
+	var ns corev1.Namespace
+	var returnData cf.NewReturnData
+	_, err = abc(c, &ns)
+	if err != nil {
+		msg := "Namespace配置信息不完整：" + err.Error()
+		returnData.Status = 400
+		returnData.Message = msg
+		c.JSON(http.StatusOK, returnData)
+		return
+	}
+	_, err = cf.ClientSet.CoreV1().Namespaces().Update(context.TODO(), &ns, metav1.UpdateOptions{})
+	if err != nil {
+		logs.Error(map[string]interface{}{"Namespace名称:": ns.Name}, "Namespace更新失败")
+		msg := "Namespace更新失败：" + err.Error()
+		returnData.Message = msg
+		returnData.Status = 400
+		c.JSON(http.StatusOK, returnData)
+	} else {
+		logs.Info(map[string]interface{}{"Namespace名称:": ns.Name}, "Namespace更新成功")
+		msg := "Namespace更新成功"
+		returnData.Message = msg
+		returnData.Status = 200
+		c.JSON(http.StatusOK, returnData)
+	}
+
 }
 
 // 删除Namespace
 func Delete(c *gin.Context) {
 	var returnData cf.NewReturnData
-
 	clusterconfig := NsBasicInfo{}
 	clusterconfig.Name = c.Query("name")
 	err := cf.ClientSet.CoreV1().Namespaces().Delete(context.TODO(), clusterconfig.Name, metav1.DeleteOptions{})
@@ -141,11 +128,10 @@ func Delete(c *gin.Context) {
 // 查询Namespace信息
 func Get(c *gin.Context) {
 	var returnData cf.NewReturnData
-	//logs.Info(nil, "获取Namespace信息")
 	clusterconfig := NsBasicInfo{}
 	clusterconfig.Name = c.Query("name")
-	//nsinfo, err := cf.ClientSet.CoreV1().Namespaces().Get(context.TODO(), clusterconfig.Name, metav1.GetOptions{})
-	nsinfo, err := getNameSpaceStatus(clusterconfig.Name)
+	nsinfo, err := cf.ClientSet.CoreV1().Namespaces().Get(context.TODO(), clusterconfig.Name, metav1.GetOptions{})
+	//nsinfo, err := getNameSpaceStatus(clusterconfig.Name)
 	if err != nil {
 		msg := "Namespace获取失败:" + err.Error()
 		returnData.Message = msg
@@ -158,8 +144,7 @@ func Get(c *gin.Context) {
 	returnData.Message = msg
 	returnData.Status = 200
 	returnData.Data = make(map[string]interface{})
-	//var nslist []map[string]string
-	//nslist = append(nslist, nsinfo.)
+
 	returnData.Data["items"] = nsinfo
 	c.JSON(http.StatusOK, returnData)
 }
@@ -167,8 +152,7 @@ func Get(c *gin.Context) {
 // 获取Namespace列表
 func List(c *gin.Context) {
 	var returnData cf.NewReturnData
-	//clusterconfig := NsBasicInfo{}
-	//clusterconfig.ClusterId = c.Query("clusterid")
+
 	nsAllList, err := cf.ClientSet.CoreV1().Namespaces().List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		msg := "获取Namespace列表失败:" + err.Error()
@@ -180,17 +164,6 @@ func List(c *gin.Context) {
 	}
 	returnData.Data = make(map[string]interface{}) //map
 
-	//var nslist []map[string]string
-	//for _, v := range nsAllList.Items {
-	//	//anno := v.
-	//	nslist = append(nslist, map[string]string{
-	//		//"namespace": v.ObjectMeta.Name,
-	//		"phase": string(v.Status.Phase),
-	//		"name":  v.ObjectMeta.Name,
-	//
-	//		// 可以根据需要添加其他字段
-	//	})
-	//}
 	logs.Info(nil, "获取Namespace列表成功")
 	msg := "获取Namespace列表成功"
 	returnData.Message = msg
