@@ -87,23 +87,20 @@ func PodInfoCheck(ns string, podName string) {
 	// 你可以根据实际需求，进一步处理获取到的 Pod 详细信息
 
 }
-func DelPod(ns string, podName string) (*corev1.Pod, error) {
-	_, err := GetPod(ns, podName)
-	if err != nil {
-		fmt.Printf("Error! failed getting Pod %s in namespace %s: %s\n", podName, ns, err.Error())
-		return nil, err
-		os.Exit(1)
-		//os.Exit(1)
-	}
-	fmt.Printf("Getting Pod  %s in namespace %s", podName, ns)
 
-	err = cf.ClientSet.CoreV1().Pods(ns).Delete(context.TODO(), podName, metav1.DeleteOptions{})
-	if err != nil {
-		fmt.Printf("Error! failed to Delele pod %s:%s", podName, err.Error())
-		return nil, err
-		os.Exit(1)
+func DelPod(ns string, podName []string) (*corev1.Pod, error) {
+	for _, podtmp := range podName {
+		podtmp1 := string(podtmp)
+
+		err := cf.ClientSet.CoreV1().Pods(ns).Delete(context.TODO(), podtmp1, metav1.DeleteOptions{})
+		if err != nil {
+			fmt.Printf("Error! failed to Delele pod %s:%s", podtmp1, err.Error())
+			return nil, err
+			os.Exit(1)
+		}
+		fmt.Printf("Delele pod %s success", podtmp1)
+
 	}
-	fmt.Printf("Delele pod %s success", podName)
 	return nil, nil
 }
 
