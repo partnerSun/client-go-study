@@ -4,6 +4,7 @@ import (
 	cf "client-go-study/config"
 	"client-go-study/utils/logs"
 	"context"
+	"errors"
 	"github.com/gin-gonic/gin"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -24,32 +25,55 @@ type NsBasicInfo struct {
 
 var err error
 
+func basicInit(c *gin.Context, item interface{}) (nsbasic NsBasicInfo, err2 error) {
+	//绑定post参数
+	clusterconfig := NsBasicInfo{}
+	clusterconfig.Items = item
+	rMethod := c.Request.Method
+	if rMethod == "GET" {
+		err = c.ShouldBindQuery(&clusterconfig)
+	} else if rMethod == "POST" {
+		err = c.ShouldBindJSON(&clusterconfig)
+	} else {
+		err = errors.New("不支持的请求类型")
+	}
+	return clusterconfig, err
+}
+
 func add(c *gin.Context) {
 	var returnData cf.NewReturnData
 	//绑定post参数
-	clusterconfig := NsBasicInfo{}
-	if err := c.ShouldBindJSON(&clusterconfig); err != nil { //如果 JSON 数据无法绑定到结构体，它不会返回错误，而是返回一个布尔值（bool）
-		msg := "Namespace的配置信息不完整: " + err.Error()
+	//clusterconfig := NsBasicInfo{}
+	//if err := c.ShouldBindJSON(&clusterconfig); err != nil { //如果 JSON 数据无法绑定到结构体，它不会返回错误，而是返回一个布尔值（bool）
+	//	msg := "Namespace的配置信息不完整: " + err.Error()
+	//	returnData.Status = 400
+	//	returnData.Message = msg
+	//	c.JSON(200, returnData)
+	//	return
+	//}
+	ns, err := basicInit(c, nil)
+	if err != nil {
+		msg := "Namespace配置信息不完整：" + err.Error()
 		returnData.Status = 400
 		returnData.Message = msg
-		c.JSON(200, returnData)
+		c.JSON(http.StatusOK, returnData)
 		return
 	}
 
 	////用于创建ns
 	var clusterNamespace corev1.Namespace
-	clusterNamespace.Name = clusterconfig.Name
+	clusterNamespace.Name = ns.Name
 
 	_, err = cf.ClientSet.CoreV1().Namespaces().Create(context.TODO(), &clusterNamespace, metav1.CreateOptions{})
 
 	if err != nil {
-		logs.Error(map[string]interface{}{"Namespace名称:": clusterconfig.Name}, "Namespace创建失败")
+		logs.Error(map[string]interface{}{"Namespace名称:": ns.Name}, "Namespace创建失败")
 		msg := "Namespace创建失败：" + err.Error()
 		returnData.Message = msg
 		returnData.Status = 400
 		c.JSON(http.StatusOK, returnData)
 	} else {
-		logs.Info(map[string]interface{}{"Namespace名称:": clusterconfig.Name}, "Namespace创建成功")
+		logs.Info(map[string]interface{}{"Namespace名称:": ns.Name}, "Namespace创建成功")
 		msg := "Namespace创建成功"
 		returnData.Message = msg
 		returnData.Status = 200
@@ -63,23 +87,14 @@ func Create(c *gin.Context) {
 	add(c)
 }
 
-func abc(c *gin.Context, item interface{}) (nsbasic NsBasicInfo, err2 error) {
-	//绑定post参数
-	clusterconfig := NsBasicInfo{}
-	clusterconfig.Items = item
-	if err := c.ShouldBindJSON(&clusterconfig); err != nil { //如果 JSON 数据无法绑定到结构体，它不会返回错误，而是返回一个布尔值（bool）
-		return nsbasic, err
-	}
-	return clusterconfig, nil
-}
-
 // 更新Namespace
 func Update(c *gin.Context) {
 	logs.Info(nil, "更新Namespace")
 	//addOrUpdate(c, "update")
 	var ns corev1.Namespace
 	var returnData cf.NewReturnData
-	_, err = abc(c, &ns)
+
+	_, err = basicInit(c, &ns)
 	if err != nil {
 		msg := "Namespace配置信息不完整：" + err.Error()
 		returnData.Status = 400
