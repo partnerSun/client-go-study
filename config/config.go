@@ -39,6 +39,7 @@ type PodSruct struct {
 type NewReturnData struct {
 	Status  int
 	Message string
+	Type    string
 	Data    map[string]interface{}
 }
 
