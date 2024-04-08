@@ -60,6 +60,7 @@ func addOrUpdate(c *gin.Context, op string) {
 	var returnData cf.NewReturnData
 	//区分创建还是更新
 	var arg string
+	var err error
 	if op == "Create" || op == "create" {
 		arg = "创建"
 	} else {
@@ -75,15 +76,15 @@ func addOrUpdate(c *gin.Context, op string) {
 		return
 	}
 	//判断集群状态
-	clusterStatus, err := clusterconfig.getClusterStatus()
-	if err != nil {
-		msg := "无法获取集群信息" + err.Error()
-		returnData.Message = msg
-		returnData.Status = 400
-		c.JSON(http.StatusOK, returnData)
-		logs.Error(map[string]interface{}{"error": err.Error()}, "集群失败,无法获取集群信息")
-		return
-	}
+	clusterStatus, _ := clusterconfig.getClusterStatus()
+	//if err != nil {
+	//	msg := "无法获取集群信息" + err.Error()
+	//	returnData.Message = msg
+	//	returnData.Status = 400
+	//	c.JSON(http.StatusOK, returnData)
+	//	logs.Info(map[string]interface{}{"error": err.Error()}, "集群失败,无法获取集群信息")
+	//	return
+	//}
 	logs.Info(map[string]interface{}{"集群名称": clusterconfig.DisplayName, "集群ID": clusterconfig.Id}, "开始"+arg+"集群")
 
 	//配置scret

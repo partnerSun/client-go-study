@@ -40,3 +40,23 @@ func JwtAuthCheck(c *gin.Context) {
 	}
 
 }
+
+func CORSMiddleware(c *gin.Context) {
+
+	// 允许指定的跨域来源
+	c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
+	// 允许指定的请求方法
+	c.Writer.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+	// 允许指定的请求头部信息
+	c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+
+	// 处理 OPTIONS 请求，返回允许的请求方法
+	if c.Request.Method == "OPTIONS" {
+		c.AbortWithStatus(204)
+		return
+	}
+
+	// 继续处理请求
+	c.Next()
+
+}
