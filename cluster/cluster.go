@@ -20,6 +20,7 @@ func ClusterInfoCheck(clientset *kubernetes.Clientset) {
 	fmt.Println("Nodes in the cluster:")
 	for _, node := range nodes.Items {
 		fmt.Printf("- Node: %s\n", node.GetName())
+
 	}
 
 }

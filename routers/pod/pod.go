@@ -16,18 +16,18 @@ func RegisterSubRouters(sgroup *gin.RouterGroup) {
 
 }
 
-func podget(clusterGroup *gin.RouterGroup) {
-	clusterGroup.GET("/get", pod.Get)
+func podget(podGroup *gin.RouterGroup) {
+	podGroup.GET("/get", pod.Get)
 }
 
-func podcreate(clusterGroup *gin.RouterGroup) {
-	clusterGroup.POST("/create", pod.Create)
+func podcreate(podGroup *gin.RouterGroup) {
+	podGroup.POST("/create", pod.Create)
 }
 
-func poddelete(clusterGroup *gin.RouterGroup) {
-	clusterGroup.POST("/delete", pod.Delete)
+func poddelete(podGroup *gin.RouterGroup) {
+	podGroup.POST("/delete", pod.Delete)
 }
 
-func podlist(clusterGroup *gin.RouterGroup) {
-	clusterGroup.GET("/list", pod.List)
+func podlist(podGroup *gin.RouterGroup) {
+	podGroup.GET("/list", pod.List)
 }

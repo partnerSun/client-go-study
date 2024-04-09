@@ -56,6 +56,7 @@ func add(c *gin.Context) {
 		msg := "Namespace配置信息不完整：" + err.Error()
 		returnData.Status = 400
 		returnData.Message = msg
+		returnData.Type = "error"
 		c.JSON(http.StatusOK, returnData)
 		return
 	}
@@ -71,12 +72,14 @@ func add(c *gin.Context) {
 		msg := "Namespace创建失败：" + err.Error()
 		returnData.Message = msg
 		returnData.Status = 400
+		returnData.Type = "error"
 		c.JSON(http.StatusOK, returnData)
 	} else {
 		logs.Info(map[string]interface{}{"Namespace名称:": ns.Name}, "Namespace创建成功")
 		msg := "Namespace创建成功"
 		returnData.Message = msg
 		returnData.Status = 200
+		returnData.Type = "success"
 		c.JSON(http.StatusOK, returnData)
 	}
 }
@@ -99,6 +102,7 @@ func Update(c *gin.Context) {
 		msg := "Namespace配置信息不完整：" + err.Error()
 		returnData.Status = 400
 		returnData.Message = msg
+		returnData.Type = "error"
 		c.JSON(http.StatusOK, returnData)
 		return
 	}
@@ -108,12 +112,14 @@ func Update(c *gin.Context) {
 		msg := "Namespace更新失败：" + err.Error()
 		returnData.Message = msg
 		returnData.Status = 400
+		returnData.Type = "error"
 		c.JSON(http.StatusOK, returnData)
 	} else {
 		logs.Info(map[string]interface{}{"Namespace名称:": ns.Name}, "Namespace更新成功")
 		msg := "Namespace更新成功"
 		returnData.Message = msg
 		returnData.Status = 200
+		returnData.Type = "success"
 		c.JSON(http.StatusOK, returnData)
 	}
 
@@ -129,6 +135,7 @@ func Delete(c *gin.Context) {
 		msg := "Namespace删除失败:" + err.Error()
 		returnData.Message = msg
 		returnData.Status = 400
+		returnData.Type = "error"
 		c.JSON(http.StatusOK, returnData)
 		logs.Error(map[string]interface{}{"error": err.Error()}, "Namespace删除失败")
 		return
@@ -136,6 +143,7 @@ func Delete(c *gin.Context) {
 	logs.Info(nil, "成功删除Namespace"+clusterconfig.Name)
 	msg := "删除Namespace " + clusterconfig.Name + " 成功"
 	returnData.Message = msg
+	returnData.Type = "success"
 	returnData.Status = 200
 	c.JSON(http.StatusOK, returnData)
 }
@@ -151,6 +159,7 @@ func Get(c *gin.Context) {
 		msg := "Namespace获取失败:" + err.Error()
 		returnData.Message = msg
 		returnData.Status = 400
+		returnData.Type = "error"
 		c.JSON(http.StatusOK, returnData)
 		logs.Error(map[string]interface{}{"error": err.Error()}, "Namespace失败,无法获取Namespace信息")
 		return
@@ -158,6 +167,7 @@ func Get(c *gin.Context) {
 	msg := "获取Namespace " + clusterconfig.Name + " 成功"
 	returnData.Message = msg
 	returnData.Status = 200
+	returnData.Type = "success"
 	returnData.Data = make(map[string]interface{})
 
 	returnData.Data["items"] = nsinfo
@@ -173,16 +183,33 @@ func List(c *gin.Context) {
 		msg := "获取Namespace列表失败:" + err.Error()
 		returnData.Message = msg
 		returnData.Status = 400
+		returnData.Type = "error"
 		c.JSON(http.StatusOK, returnData)
 		logs.Error(map[string]interface{}{"error": err.Error()}, "获取Namespace列表失败")
 		return
 	}
-	returnData.Data = make(map[string]interface{}) //map
+	var nslist []map[string]string
+	for _, ns := range nsAllList.Items {
+		nsMap := map[string]string{
+			"name":       ns.Name,
+			"uid":        string(ns.UID),
+			"createtime": ns.CreationTimestamp.String(),
+			"status":     string(ns.Status.Phase),
+		}
+		nslist = append(nslist, nsMap)
+		//fmt.Printf("ns:\n\n\n", ns)
+		//fmt.Printf("Namespace Name: %s\n", ns.Name)
+		//fmt.Printf("Creation Timestamp: %s\n", ns.CreationTimestamp)
+		//fmt.Printf("uid: %s\n", ns.UID)
+		//fmt.Printf("status", ns.Status.Phase)
+	}
 
+	returnData.Data = make(map[string]interface{}) //map
 	logs.Info(nil, "获取Namespace列表成功")
 	msg := "获取Namespace列表成功"
 	returnData.Message = msg
 	returnData.Status = 200
-	returnData.Data["items"] = nsAllList
+	returnData.Type = "success"
+	returnData.Data["items"] = nslist
 	c.JSON(http.StatusOK, returnData)
 }
