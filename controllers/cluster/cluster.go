@@ -33,8 +33,6 @@ type ClusterStatus struct {
 	Status  string `json:"status"`
 }
 
-//var err error
-
 // 结构体方法，判断集群状态
 //func (c *ClusterConfig) getClusterStatus() (ClusterStatus, error) {
 //	clusterStatus := ClusterStatus{}
@@ -140,9 +138,8 @@ func Add(c *gin.Context) {
 		return
 	}
 	clientSet, err := client.ClientSetinitByString(clusterStatus.KubeConfig)
-
 	if err != nil {
-		msg := "kubeconfig配置有问题: " + err.Error()
+		msg := "kubeconfig配置不完整: " + err.Error()
 		logs.Error(nil, msg)
 		returnData.Status = 400
 		returnData.Message = msg
@@ -197,6 +194,61 @@ func Add(c *gin.Context) {
 func Update(c *gin.Context) {
 	logs.Info(nil, "更新集群")
 	//addOrUpdate(c, "update")
+	//addOrUpdate(c, "create")
+	var returnData cf.NewReturnData
+	var clusterSecretConfig corev1.Secret
+	//clusterConfig := ClusterConfig{}
+	clusterStatus := ClusterConfig{}
+	//通过cluster-id更新
+	//clusterid := c.Query("clusterid")
+	if err := c.ShouldBindJSON(&clusterStatus); err != nil { //如果 JSON 数据无法绑定到结构体，它不会返回错误，而是返回一个布尔值（bool）
+		msg := "集群配置信息不完整: " + err.Error()
+		returnData.Status = 400
+		returnData.Message = msg
+		returnData.Type = "error"
+		c.JSON(200, returnData)
+		return
+	}
+	//判断kubeconfig合法性
+	_, err := client.ClientSetinitByString(clusterStatus.KubeConfig)
+	if err != nil {
+		msg := "kubeconfig配置不完整: " + err.Error()
+		logs.Error(nil, msg)
+		returnData.Status = 400
+		returnData.Message = msg
+		returnData.Type = "error"
+		c.JSON(200, returnData)
+		return
+		//os.Exit(1)
+	}
+
+	clusterSecretConfig.Name = clusterStatus.Id
+	clusterSecretConfig.Labels = map[string]string{"metadata": "true"}
+
+	//添加Annotations
+	clusterSecretConfig.Annotations = make(map[string]string)
+	m := utils.Struct2map(clusterStatus.ClusterStatus) //结构体转map
+	clusterSecretConfig.Annotations = m
+
+	//secret的data字段，需要加密，stringdata自带加密，所以此处直接使用stringdata
+	clusterSecretConfig.StringData = map[string]string{"kubeconfig": clusterStatus.KubeConfig}
+
+	_, err = cf.ClientSet.CoreV1().Secrets(cf.MetaNamespace).Update(context.TODO(), &clusterSecretConfig, metav1.UpdateOptions{})
+	if err != nil {
+		logs.Error(map[string]interface{}{"集群id:": clusterStatus.Id, "集群名称:": clusterStatus.DisplayName}, "集群更新失败")
+		msg := "更新集群失败：" + err.Error()
+		returnData.Message = msg
+		returnData.Status = 400
+		returnData.Type = "error"
+		c.JSON(http.StatusOK, returnData)
+	} else {
+		logs.Info(map[string]interface{}{"集群id:": clusterStatus.Id, "集群名称:": clusterStatus.DisplayName}, "集群更新成功")
+		msg := "更新集群成功"
+		returnData.Message = msg
+		returnData.Status = 200
+		returnData.Type = "success"
+		c.JSON(http.StatusOK, returnData)
+	}
 }
 
 // 通过删除secret来删除集群
