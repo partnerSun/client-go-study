@@ -7,7 +7,6 @@ import (
 	"github.com/gin-gonic/gin"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"net/http"
-	"time"
 )
 
 func List(c *gin.Context) {
@@ -26,50 +25,46 @@ func List(c *gin.Context) {
 		returnData.Message = msg
 		returnData.Status = 200
 		returnData.Type = "success"
-		//returnData.Data = nodes.Items
-		// 打印节点信息
-		//fmt.Printf("%-20s %-7s %-10s %-10s %-7s\n", "NAME", "STATUS", "ROLES", "AGE", "VERSION")
-		var clusterlist []map[string]string
-		for _, node := range nodes.Items {
-			status := "Unknown"
-			for _, condition := range node.Status.Conditions {
-				if condition.Type == "Ready" && condition.Status == "True" {
-					status = "Ready"
-					break
-				} else if condition.Type == "Ready" && condition.Status == "False" {
-					status = "NotReady"
-					break
-				}
-			}
-			var roles string
-			for _, role := range node.GetLabels()["kubernetes.io/role"] {
-				roles += string(role) + ","
-			}
-			//fmt.Printf("roles:", roles)
-			if roles != "" {
-				roles = roles[:len(roles)-1] // remove trailing comma
-			} else {
-				roles = "null"
-			}
-
-			age := time.Since(node.CreationTimestamp.Time).Round(time.Second).String()
-			version := node.Status.NodeInfo.KubeletVersion
-			//fmt.Printf("%-20s %-7s %-10s %-10s %-7s\n", node.GetName(), status, roles, age, version)
-			nodeList := map[string]string{
-				"name":    node.GetName(),
-				"status":  status,
-				"roles":   roles,
-				"age":     age,
-				"version": version,
-			}
-
-			clusterlist = append(clusterlist, nodeList)
-			//fmt.Printf("clusterlist:", clusterlist)
-		}
 		returnData.Data = make(map[string]interface{})
-		returnData.Data["items"] = clusterlist
-		//logs.Info(nil, "获取节点信息成功")
-		//fmt.Printf("items: %v\n", returnData.Data["items"])
+		returnData.Data["items"] = nodes.Items
+		//
+		//var clusterlist []map[string]string
+		//for _, node := range nodes.Items {
+		//	status := "Unknown"
+		//	for _, condition := range node.Status.Conditions {
+		//		if condition.Type == "Ready" && condition.Status == "True" {
+		//			status = "Ready"
+		//			break
+		//		} else if condition.Type == "Ready" && condition.Status == "False" {
+		//			status = "NotReady"
+		//			break
+		//		}
+		//	}
+		//	var roles string
+		//	for _, role := range node.GetLabels()["kubernetes.io/role"] {
+		//		roles += string(role) + ","
+		//	}
+		//	if roles != "" {
+		//		roles = roles[:len(roles)-1] // remove trailing comma
+		//	} else {
+		//		roles = "null"
+		//	}
+		//
+		//	age := time.Since(node.CreationTimestamp.Time).Round(time.Second).String()
+		//	version := node.Status.NodeInfo.KubeletVersion
+		//	nodeList := map[string]string{
+		//		"name":    node.GetName(),
+		//		"status":  status,
+		//		"roles":   roles,
+		//		"age":     age,
+		//		"version": version,
+		//	}
+		//
+		//	clusterlist = append(clusterlist, nodeList)
+		//}
+		//
+		//returnData.Data["items"] = clusterlist
+
 		c.JSON(http.StatusOK, returnData)
 	}
 
